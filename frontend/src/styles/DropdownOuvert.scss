@@ -1,0 +1,57 @@
+.dropdown-page {
+  background-color: rgba(130, 184, 100, 0.4); // fond général
+  min-height: 100vh;
+  padding: 2rem 0;
+
+  .filter-button-container {
+    text-align: center;
+    margin-bottom: 2rem;
+
+    .filter-btn {
+      width: 60%; 
+      background-color: #0074c7;
+      color: rgb(9, 9, 9);
+      font-size: 1.2rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+       pointer-events: none;
+
+      &:hover {
+        background-color: rgba(130, 184, 100, 0.7);
+        transform: scale(1.05);
+      }
+    }
+  }
+
+  .metiers-section {
+    width: 90%;
+    margin: 0 auto;
+
+    .metier-btn {
+      width: 50%; 
+      margin-bottom: 0.8rem;
+      background-color: rgba(130, 184, 100, 0.6);
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      transition: all 0.2s ease;
+
+      &:hover {
+        transform: scale(1.05);
+        background-color: rgba(130, 184, 100, 0.85);
+      }
+
+      &.title-btn {
+        background-color: rgba(130, 184, 100, 0.9);
+        font-size: 1.2rem;
+        font-weight: bold;
+        pointer-events: none; // bouton titre non cliquable
+      }
+    }
+  }
+}
