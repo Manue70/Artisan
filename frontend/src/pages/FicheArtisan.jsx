@@ -70,6 +70,9 @@ function FicheArtisan() {
           site_web: artisanData.site_web || artisanData.Site_web || ""
     };
     setArtisan(formatted);
+    console.log("Artisan final pour React :", formatted);
+    console.log("Artisan pour affichage :", formatted);
+
   }
 
       setLoading(false);
