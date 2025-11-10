@@ -36,71 +36,71 @@ function FicheArtisan() {
   const [sent, setSent] = useState(false);
 
   // --- useEffect (à l’intérieur de la fonction) ---
-  useEffect(() => {
-    let url = "";
-
-    if (specialite) {
-      url = `${API_URL}/api/artisans/specialite/${encodeURIComponent(specialite)}`;
-    } else if (id) {
-      url = `${API_URL}/api/artisans/${id}`;
-    } else {
-      setError("Aucun artisan spécifié");
-      setLoading(false);
-      return;
-    }
-
-    console.log("Fetching artisan with URL:", url);
-
-    fetch(url)
-      .then(res => {
-        if (!res.ok) throw new Error("Artisan non trouvé");
-        return res.json();
-      })
-      .then(data => {
-        const artisanData = Array.isArray(data) ? data[0] : data;
-
-        console.log("Artisan brut reçu :", data);
-        console.log("Artisan transformé :", artisanData);
-
-        if (!artisanData) {
-          setError("Artisan non trouvé");
-        } else {
-         
-
-          console.log("✅ Artisan final pour React :", formatted);
-          setArtisan(formatted);
-        }
-        const normalizeKeys = (obj) => {
-          if (!obj) return {};
-          const result = {};
-          for (const [key, value] of Object.entries(obj)) {
-            result[key.toLowerCase()] = value;
-    }
-    return result;
-};
-
-const dataNorm = normalizeKeys(artisanData);
-
-const formatted = {
-  nom: dataNorm.nom || "",
-  specialite: dataNorm.specialite || "",
-  ville: dataNorm.ville || "",
-  a_propos: dataNorm.a_propos || "",
-  photo: dataNorm.photo || "",
-  note: dataNorm.note || 0,
-  site_web: dataNorm.site_web || ""
-};
-
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Erreur fetch :", err);
-        setError(err.message);
-        setLoading(false);
-      });
-  }, [specialite, id]);
+  
 
   console.log("🎯 Artisan dans le render :", artisan);
+  useEffect(() => {
+  let url = "";
+
+  if (specialite) {
+    url = `${API_URL}/api/artisans/specialite/${encodeURIComponent(specialite)}`;
+  } else if (id) {
+    url = `${API_URL}/api/artisans/${id}`;
+  } else {
+    setError("Aucun artisan spécifié");
+    setLoading(false);
+    return;
+  }
+
+  console.log("Fetching artisan with URL:", url);
+
+  fetch(url)
+    .then((res) => {
+      if (!res.ok) throw new Error("Artisan non trouvé");
+      return res.json();
+    })
+    .then((data) => {
+      const artisanData = Array.isArray(data) ? data[0] : data;
+
+      console.log("Artisan brut reçu :", data);
+
+      if (!artisanData) {
+        setError("Artisan non trouvé");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Normalisation des clés
+      const normalizeKeys = (obj) => {
+        const result = {};
+        for (const [key, value] of Object.entries(obj || {})) {
+          result[key.toLowerCase()] = value;
+        }
+        return result;
+      };
+
+      const dataNorm = normalizeKeys(artisanData);
+
+      const formatted = {
+        nom: dataNorm.nom || "",
+        specialite: dataNorm.specialite || "",
+        ville: dataNorm.ville || "",
+        a_propos: dataNorm.a_propos || "",
+        photo: dataNorm.photo || "",
+        note: dataNorm.note || 0,
+        site_web: dataNorm.site_web || ""
+      };
+
+      console.log("✅ Artisan final normalisé :", formatted);
+      setArtisan(formatted);
+      setLoading(false);
+    })
+    .catch((err) => {
+      console.error("Erreur fetch :", err);
+      setError(err.message);
+      setLoading(false);
+    });
+}, [specialite, id]);
 
 
   // --- Gestion du formulaire ---
