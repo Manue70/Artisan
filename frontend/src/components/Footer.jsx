@@ -26,7 +26,7 @@ function Footer() {
 
   return (
     <footer className="custom-footer">
-      {/* LIGNE 1 */}
+      {/* Logo et favicon */}
       <div className="footer-top">
         <div className="footer-item favicon">
           <img src="/assets/favicon.png" alt="favicon" />
@@ -43,7 +43,7 @@ function Footer() {
         </div>
       </div>
 
-      {/* LIGNE 2 */}
+      {/* Mentions légales, cookies, données personnelles, accessibilités */}
       <div className="footer-links">
         <button onClick={() => navigate("/mentions-legales")}>
           Mentions légales
@@ -57,7 +57,7 @@ function Footer() {
         </button>
       </div>
 
-      {/* LIGNE 3 */}
+      {/*Reseaux sociaux */}
       <div className="footer-socials">
         <FaFacebookF onClick={() => window.open(socialLinks.facebook, "_blank")} />
         <FaLinkedinIn onClick={() => window.open(socialLinks.linkedin, "_blank")} />
