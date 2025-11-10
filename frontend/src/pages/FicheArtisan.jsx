@@ -60,8 +60,18 @@ function FicheArtisan() {
       if (!artisanData) {
         setError("Artisan non trouvé");
       } else {
-        setArtisan(artisanData);
-      }
+        const formatted = {
+          nom: artisanData.nom || artisanData.Nom || "",
+          specialite: artisanData.specialite || artisanData.Specialite || "",
+          ville: artisanData.ville || artisanData.Ville || "",
+          a_propos: artisanData.a_propos || artisanData.A_propos || "",
+          photo: artisanData.photo || artisanData.Photo || "",
+          note: artisanData.note || artisanData.Note || 0,
+          site_web: artisanData.site_web || artisanData.Site_web || ""
+    };
+    setArtisan(formatted);
+  }
+
       setLoading(false);
     })
     .catch(err => {
