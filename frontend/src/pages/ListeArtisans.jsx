@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
 import "../styles/ListeArtisans.scss";
 import ArtisanCard from "../components/ArtisanCard";
+import { API_URL } from "../config.js";
 
 function ListeArtisans() {
   const [artisans, setArtisans] = useState([]);
-  const navigate = useNavigate(); // 
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/artisans")
+    fetch(`${API_URL}/api/artisans`)
       .then((res) => res.json())
       .then((data) => setArtisans(data))
       .catch((err) => console.error(err));
@@ -26,7 +27,7 @@ function ListeArtisans() {
           star={a.note}
           photo={a.photo}
           variant="liste"
-          onClick={() => navigate(`/fiche-artisan/${a.id}`)} 
+          onClick={() => navigate(`/fiche-artisan/${a.id}`)}
         />
       ))}
     </main>
@@ -34,6 +35,7 @@ function ListeArtisans() {
 }
 
 export default ListeArtisans;
+
 
 
 

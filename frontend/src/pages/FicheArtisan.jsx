@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { FaStar, FaStarHalfAlt, FaRegStar, FaUserCircle } from "react-icons/fa";
 import "../styles/FicheArtisan.scss";
+import { API_URL } from "../config.js";
 
 function Stars({ note }) {
   const fullStars = Math.floor(note);
@@ -38,34 +39,16 @@ function FicheArtisan() {
 
   useEffect(() => {
     let url = "";
-    if (id) {
-      // Récupération par ID
-      url = `http://localhost:5000/api/artisans/${id}`;
-    } else if (specialite) {
-      // Récupération par spécialité
-      url = `http://localhost:5000/api/artisans/specialite/${encodeURIComponent(specialite)}`;
-    } else {
-      setError("Aucun artisan spécifié");
-      setLoading(false);
-      return;
-    }
+    if (id) url = `${API_URL}/api/artisans/${id}`;
+    else if (specialite) url = `${API_URL}/api/artisans/specialite/${encodeURIComponent(specialite)}`;
+    else { setError("Aucun artisan spécifié"); setLoading(false); return; }
 
     fetch(url)
-      .then((res) => {
-        if (!res.ok) throw new Error("Artisan non trouvé");
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Artisan récupéré :", data);
-        setArtisan(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Erreur fetch :", err);
-        setError(err.message);
-        setLoading(false);
-      });
+      .then((res) => { if (!res.ok) throw new Error("Artisan non trouvé"); return res.json(); })
+      .then((data) => { setArtisan(data); setLoading(false); })
+      .catch((err) => { setError(err.message); setLoading(false); });
   }, [id, specialite]);
+
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

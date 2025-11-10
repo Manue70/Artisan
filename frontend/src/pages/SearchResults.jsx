@@ -2,15 +2,15 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ArtisanCard from "../components/ArtisanCard";
 import "../styles/ListeArtisans.scss";
+import { API_URL } from "../config.js";
 
 function SearchResults() {
   const { nom } = useParams();
   const [artisans, setArtisans] = useState([]);
   const navigate = useNavigate();
-  
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/artisans/search/${nom}`)
+    fetch(`${API_URL}/api/artisans/search/${nom}`)
       .then((res) => res.json())
       .then((data) => setArtisans(data))
       .catch((err) => console.error(err));
@@ -38,3 +38,4 @@ function SearchResults() {
 }
 
 export default SearchResults;
+
