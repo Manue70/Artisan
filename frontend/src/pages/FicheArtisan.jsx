@@ -35,9 +35,6 @@ function FicheArtisan() {
   });
   const [sent, setSent] = useState(false);
 
-  // --- useEffect (à l’intérieur de la fonction) ---
-  
-
   console.log("🎯 Artisan dans le render :", artisan);
   useEffect(() => {
   let url = "";
@@ -100,7 +97,7 @@ function FicheArtisan() {
       setError(err.message);
       setLoading(false);
     });
-}, [specialite, id]);
+  }, [specialite, id]);
 
 
   // --- Gestion du formulaire ---
