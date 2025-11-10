@@ -54,10 +54,9 @@ function FicheArtisan() {
       return res.json();
     })
     .then(data => {
-      // Si l'API renvoie un tableau, prends le premier élément
+      
       const artisanData = Array.isArray(data) ? data[0] : data;
 
-      // Si aucune donnée n'est trouvée, on gère l'erreur
       if (!artisanData) {
         setError("Artisan non trouvé");
       } else {
