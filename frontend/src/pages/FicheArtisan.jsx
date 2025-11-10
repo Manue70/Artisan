@@ -10,6 +10,7 @@ function Stars({ note }) {
   const halfStar = note - fullStars >= 0.5;
   const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
 
+
   return (
     <div className="stars">
       {[...Array(fullStars)].map((_, i) => <FaStar key={i} color="#FFD700" />)}
@@ -19,7 +20,6 @@ function Stars({ note }) {
   );
 }
 
-// --- Composant principal ---
 function FicheArtisan() {
   const { specialite, id } = useParams(); 
   const [artisan, setArtisan] = useState(null);
@@ -87,6 +87,9 @@ function FicheArtisan() {
         setLoading(false);
       });
   }, [specialite, id]);
+
+  console.log("🎯 Artisan dans le render :", artisan);
+
 
   // --- Gestion du formulaire ---
   const handleChange = (e) =>
