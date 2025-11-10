@@ -74,9 +74,10 @@ const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, "static")));
 
 // Toutes les routes non-API renvoient index.html
-app.get("*", (req, res) => {
+app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "static", "index.html"));
 });
+
 
 //  Port pour Render 
 const PORT = process.env.PORT || 5000;
