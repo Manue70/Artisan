@@ -65,19 +65,31 @@ function FicheArtisan() {
         if (!artisanData) {
           setError("Artisan non trouvé");
         } else {
-          const formatted = {
-            nom: artisanData.nom || artisanData.Nom || "",
-            specialite: artisanData.specialite || artisanData.Specialite || "",
-            ville: artisanData.ville || artisanData.Ville || "",
-            a_propos: artisanData.a_propos || artisanData.A_propos || "",
-            photo: artisanData.photo || artisanData.Photo || "",
-            note: artisanData.note || artisanData.Note || 0,
-            site_web: artisanData.site_web || artisanData.Site_web || ""
-          };
+         
 
           console.log("✅ Artisan final pour React :", formatted);
           setArtisan(formatted);
         }
+        const normalizeKeys = (obj) => {
+          if (!obj) return {};
+          const result = {};
+          for (const [key, value] of Object.entries(obj)) {
+            result[key.toLowerCase()] = value;
+    }
+    return result;
+};
+
+const dataNorm = normalizeKeys(artisanData);
+
+const formatted = {
+  nom: dataNorm.nom || "",
+  specialite: dataNorm.specialite || "",
+  ville: dataNorm.ville || "",
+  a_propos: dataNorm.a_propos || "",
+  photo: dataNorm.photo || "",
+  note: dataNorm.note || 0,
+  site_web: dataNorm.site_web || ""
+};
 
         setLoading(false);
       })
