@@ -23,13 +23,14 @@ export default function App() {
           <Route path="/" element={<Accueil />} />
           <Route path="/dropdown" element={<DropdownOuvert />} />
           <Route path="/artisans" element={<ListeArtisans />} />
+          <Route path="/fiche-artisan/specialite/:specialite" element={<FicheArtisan />} />
           <Route path="/fiche-artisan/:id" element={<FicheArtisan />} />
           <Route path="/message-envoye" element={<MessageEnvoye />} />
           <Route path="/mentions-legales" element={<MentionsLegales />} />
           <Route path="/cookies" element={<Cookies />} />
           <Route path="/donnees-personnelles" element={<DonneesPersonnelles />} />
           <Route path="/accessibilites" element={<Accessibilites />} />
-          <Route path="/fiche-artisan/specialite/:specialite" element={<FicheArtisan />} />
+          
           <Route path="/search/:nom" element={<SearchResults />} />
 
           <Route path="*" element={<NotFound />} />

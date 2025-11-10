@@ -11,19 +11,15 @@ function Stars({ note }) {
 
   return (
     <div className="stars">
-      {[...Array(fullStars)].map((_, i) => (
-        <FaStar key={i} color="#FFD700" />
-      ))}
+      {[...Array(fullStars)].map((_, i) => <FaStar key={i} color="#FFD700" />)}
       {halfStar && <FaStarHalfAlt color="#FFD700" />}
-      {[...Array(emptyStars)].map((_, i) => (
-        <FaRegStar key={i} color="#FFD700" />
-      ))}
+      {[...Array(emptyStars)].map((_, i) => <FaRegStar key={i} color="#FFD700" />)}
     </div>
   );
 }
 
 function FicheArtisan() {
-  const { id, specialite } = useParams();
+  const { specialite, id } = useParams(); 
   const [artisan, setArtisan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,27 +34,47 @@ function FicheArtisan() {
   const [sent, setSent] = useState(false);
 
   useEffect(() => {
-    let url = "";
-    if (id) url = `${API_URL}/api/artisans/${id}`;
-    else if (specialite) url = `${API_URL}/api/artisans/specialite/${encodeURIComponent(specialite)}`;
-    else { setError("Aucun artisan spécifié"); setLoading(false); return; }
+  let url = "";
 
-    fetch(url)
-      .then((res) => { if (!res.ok) throw new Error("Artisan non trouvé"); return res.json(); })
-      .then((data) => { setArtisan(data); setLoading(false); })
-      .catch((err) => { setError(err.message); setLoading(false); });
-  }, [id, specialite]);
+  if (specialite) {
+    url = `${API_URL}/api/artisans/specialite/${encodeURIComponent(specialite)}`;
+  } else if (id) {
+    url = `${API_URL}/api/artisans/${id}`;
+  } else {
+    setError("Aucun artisan spécifié");
+    setLoading(false);
+    return;
+  }
+
+  console.log("Fetching artisan with URL:", url);
+
+  fetch(url)
+    .then(res => {
+      if (!res.ok) throw new Error("Artisan non trouvé");
+      return res.json();
+    })
+    .then(data => {
+      // Si l'API renvoie un tableau, prends le premier élément
+      const artisanData = Array.isArray(data) ? data[0] : data;
+
+      // Si aucune donnée n'est trouvée, on gère l'erreur
+      if (!artisanData) {
+        setError("Artisan non trouvé");
+      } else {
+        setArtisan(artisanData);
+      }
+      setLoading(false);
+    })
+    .catch(err => {
+      console.error("Erreur fetch :", err);
+      setError(err.message);
+      setLoading(false);
+    });
+}, [specialite, id]);
 
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Formulaire envoyé :", formData);
-    setSent(true);
-  };
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleSubmit = (e) => { e.preventDefault(); console.log("Formulaire envoyé :", formData); setSent(true); };
 
   if (loading) return <p>Chargement de l’artisan...</p>;
   if (error) return <p>Erreur : {error}</p>;
@@ -69,17 +85,12 @@ function FicheArtisan() {
       <section className="section-infos">
         <div className="infos-container">
           <div className="artisan-photo">
-            {artisan.photo ? (
-              <img src={artisan.photo} alt={artisan.nom} />
-            ) : (
-              <FaUserCircle size={120} color="#00497C" />
-            )}
+            {artisan.photo ? <img src={artisan.photo} alt={artisan.nom} /> : <FaUserCircle size={120} color="#00497C" />}
           </div>
           <h1>{artisan.nom}</h1>
           <p className="specialite">{artisan.specialite}</p>
           <p className="localisation">{artisan.ville}</p>
           <Stars note={artisan.note || 0} />
-
           <div className="a-propos">
             <h2>À propos</h2>
             <p>{artisan.a_propos || "Aucune description disponible."}</p>
@@ -93,41 +104,11 @@ function FicheArtisan() {
           <h2>Contacter l’artisan</h2>
           {!sent ? (
             <form className="contact-form" onSubmit={handleSubmit}>
-              <input
-                type="text"
-                name="nom"
-                placeholder="Votre nom"
-                value={formData.nom}
-                onChange={handleChange}
-                required
-              />
-              <input
-                type="email"
-                name="email"
-                placeholder="Votre email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-              <input
-                type="text"
-                name="objet"
-                placeholder="Objet"
-                value={formData.objet}
-                onChange={handleChange}
-                required
-              />
-              <textarea
-                name="message"
-                rows="4"
-                placeholder="Votre message"
-                value={formData.message}
-                onChange={handleChange}
-                required
-              />
-              <button className="btn-envoyer" type="submit">
-                Envoyer
-              </button>
+              <input type="text" name="nom" placeholder="Votre nom" value={formData.nom} onChange={handleChange} required />
+              <input type="email" name="email" placeholder="Votre email" value={formData.email} onChange={handleChange} required />
+              <input type="text" name="objet" placeholder="Objet" value={formData.objet} onChange={handleChange} required />
+              <textarea name="message" rows="4" placeholder="Votre message" value={formData.message} onChange={handleChange} required />
+              <button className="btn-envoyer" type="submit">Envoyer</button>
             </form>
           ) : (
             <p className="success">✅ Message envoyé avec succès !</p>
@@ -139,9 +120,7 @@ function FicheArtisan() {
       {artisan.site_web && (
         <section className="section-site">
           <h2>Site web de l’artisan</h2>
-          <a href={artisan.site_web} target="_blank" rel="noopener noreferrer">
-            {artisan.site_web}
-          </a>
+          <a href={artisan.site_web} target="_blank" rel="noopener noreferrer">{artisan.site_web}</a>
         </section>
       )}
     </main>
@@ -149,6 +128,3 @@ function FicheArtisan() {
 }
 
 export default FicheArtisan;
-
-
-
