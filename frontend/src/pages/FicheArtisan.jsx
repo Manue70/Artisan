@@ -84,6 +84,10 @@ function FicheArtisan() {
     });
 }, [specialite, id]);
 
+  useEffect(() => {
+    console.log("State artisan mis à jour :", artisan);
+},    [artisan]);
+
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
   const handleSubmit = (e) => { e.preventDefault(); console.log("Formulaire envoyé :", formData); setSent(true); };
