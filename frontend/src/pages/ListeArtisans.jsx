@@ -8,12 +8,16 @@ function ListeArtisans() {
   const [artisans, setArtisans] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetch(`${API_URL}/api/artisans`)
-      .then((res) => res.json())
-      .then((data) => setArtisans(data))
-      .catch((err) => console.error(err));
-  }, []);
+ useEffect(() => {
+  fetch(`${API_URL}/api/artisans`)
+    .then((res) => {
+      if (!res.ok) throw new Error("Erreur lors de la récupération des artisans");
+      return res.json();
+    })
+    .then((data) => setArtisans(data))
+    .catch((err) => console.error("Fetch ListeArtisans :", err));
+}, []);
+
 
   return (
     <main className="liste-artisans-page">

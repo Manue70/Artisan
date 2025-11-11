@@ -4,12 +4,10 @@ import { FaStar, FaStarHalfAlt, FaRegStar, FaUserCircle } from "react-icons/fa";
 import "../styles/FicheArtisan.scss";
 import { API_URL } from "../config.js";
 
-// --- Composant pour les étoiles ---
 function Stars({ note }) {
   const fullStars = Math.floor(note);
   const halfStar = note - fullStars >= 0.5;
   const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-
 
   return (
     <div className="stars">
@@ -35,70 +33,60 @@ function FicheArtisan() {
   });
   const [sent, setSent] = useState(false);
 
-  console.log("🎯 Artisan dans le render :", artisan);
   useEffect(() => {
-  let url = "";
+    // Supprime le slash final de API_URL si présent
+    const baseUrl = API_URL.replace(/\/$/, "");
+    let url = "";
 
-  if (specialite) {
-    url = `${API_URL}/api/artisans/specialite/${encodeURIComponent(specialite)}`;
-  } else if (id) {
-    url = `${API_URL}/api/artisans/${id}`;
-  } else {
-    setError("Aucun artisan spécifié");
-    setLoading(false);
-    return;
-  }
+    if (specialite) {
+      url = `${baseUrl}/api/artisans/specialite/${encodeURIComponent(specialite)}`;
+    } else if (id) {
+      url = `${baseUrl}/api/artisans/${id}`;
+    } else {
+      setError("Aucun artisan spécifié");
+      setLoading(false);
+      return;
+    }
 
-  console.log("Fetching artisan with URL:", url);
+    console.log("Fetching artisan with URL:", url);
 
-  fetch(url)
-    .then((res) => {
-      if (!res.ok) throw new Error("Artisan non trouvé");
-      return res.json();
-    })
-    .then((data) => {
-      const artisanData = Array.isArray(data) ? data[0] : data;
-
-      console.log("Artisan brut reçu :", data);
-
-      if (!artisanData) {
-        setError("Artisan non trouvé");
-        setLoading(false);
-        return;
-      }
-
-      // ✅ Normalisation des clés
-      const normalizeKeys = (obj) => {
-        const result = {};
-        for (const [key, value] of Object.entries(obj || {})) {
-          result[key.toLowerCase()] = value;
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Erreur ${res.status} : ${res.statusText}`);
+        return res.json();
+      })
+      .then((data) => {
+        const artisanData = Array.isArray(data) ? data[0] : data;
+        if (!artisanData) {
+          setError("Artisan non trouvé");
+          setLoading(false);
+          return;
         }
-        return result;
-      };
 
-      const dataNorm = normalizeKeys(artisanData);
+        // Normalisation des clés
+        const dataNorm = Object.fromEntries(
+          Object.entries(artisanData).map(([k, v]) => [k.toLowerCase(), v])
+        );
 
-      const formatted = {
-        nom: dataNorm.nom || "",
-        specialite: dataNorm.specialite || "",
-        ville: dataNorm.ville || "",
-        a_propos: dataNorm.a_propos || "",
-        photo: dataNorm.photo || "",
-        note: dataNorm.note || 0,
-        site_web: dataNorm.site_web || ""
-      };
+        const formatted = {
+          nom: dataNorm.nom || "",
+          specialite: dataNorm.specialite || "",
+          ville: dataNorm.ville || "",
+          a_propos: dataNorm.a_propos || "",
+          photo: dataNorm.photo || "",
+          note: dataNorm.note || 0,
+          site_web: dataNorm.site_web || "",
+        };
 
-      console.log("✅ Artisan final normalisé :", formatted);
-      setArtisan(formatted);
-      setLoading(false);
-    })
-    .catch((err) => {
-      console.error("Erreur fetch :", err);
-      setError(err.message);
-      setLoading(false);
-    });
+        setArtisan(formatted);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Erreur fetch :", err);
+        setError(err.message);
+        setLoading(false);
+      });
   }, [specialite, id]);
-
 
   // --- Gestion du formulaire ---
   const handleChange = (e) =>
@@ -202,3 +190,4 @@ function FicheArtisan() {
 }
 
 export default FicheArtisan;
+

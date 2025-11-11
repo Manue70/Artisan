@@ -1,6 +1,7 @@
+// server.js
 import express from "express";
 import cors from "cors";
-import db from "./db.js";
+import mysql from "mysql2";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -11,66 +12,105 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes API
+// --- Détection de l'environnement et configuration MySQL ---
+const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME === "production";
 
-function simulateOrQuery(sqlQuery, params, res) {
-  if (!db) {
-    console.warn("MySQL non accessible, simulation des données pour Render");
-    return res.json([
-      { 
-        id: 0, 
-        nom: "Artisan simulé", 
-        specialite: "Exemple", 
-        adresse: "N/A",
-        simule: true
-      }
-    ]);
-  }
+const dbConfig = {
+  host: isRailway
+    ? process.env.MYSQL_HOST || "maglev.proxy.rlwy.net"
+    : process.env.DB_HOST || "localhost",
+  user: process.env.MYSQL_USER || process.env.DB_USER || "root",
+  password: isRailway
+    ? process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || ""
+    : process.env.DB_PASSWORD || "",
+  database: process.env.MYSQL_DATABASE || process.env.DB_NAME || "railway",
+  port: isRailway
+    ? parseInt(process.env.RAILWAY_TCP_PROXY_PORT || process.env.MYSQL_PORT || 3306)
+    : parseInt(process.env.DB_PORT || 3306),
+};
 
-  db.query(sqlQuery, params, (err, results) => {
-    if (err) {
-      console.error("Erreur SQL :", err);
-      return res.status(500).json({ error: "Erreur serveur. MySQL accessible uniquement en local." });
-    }
-    if (results.length === 0) return res.status(404).json({ error: "Artisan non trouvé" });
-    res.json(results);
+// --- Connexion MySQL ---
+const db = mysql.createPool(dbConfig);
+
+// --- Fonction utilitaire pour les requêtes ---
+function queryDB(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.query(sql, params, (err, results) => {
+      if (err) return reject(err);
+      resolve(results);
+    });
   });
 }
 
-app.get("/api/artisans", (req, res) => simulateOrQuery("SELECT * FROM artisans", [], res));
-app.get("/api/artisans/:id", (req, res) => {
-  const { id } = req.params;
-  simulateOrQuery("SELECT * FROM artisans WHERE id = ?", [id], res);
-});
-app.get("/api/artisans/specialite/:specialite", (req, res) => {
-  const { specialite } = req.params;
-  simulateOrQuery("SELECT * FROM artisans WHERE specialite = ? LIMIT 1", [specialite], res);
-});
-app.get("/api/categories", (req, res) => {
-  if (!db) return res.json([{ nom: "Exemple" }, { nom: "Simulé" }]);
-  db.query("SELECT DISTINCT specialite FROM artisans", (err, results) => {
-    if (err) return res.status(500).json({ error: "Erreur serveur. MySQL accessible uniquement en local." });
-    res.json(results.map(r => ({ nom: r.specialite })));
-  });
-});
-app.get("/api/artisans/search/:nom", (req, res) => {
-  const { nom } = req.params;
-  simulateOrQuery("SELECT * FROM artisans WHERE nom LIKE ?", [`%${nom}%`], res);
+// --- Routes API ---
+app.get("/api/artisans", async (req, res) => {
+  try {
+    const artisans = await queryDB("SELECT * FROM artisans");
+    res.json(artisans);
+  } catch (err) {
+    console.error("Erreur SQL :", err);
+    res.status(500).json({ error: "Erreur serveur. Impossible de se connecter à MySQL." });
+  }
 });
 
-// Servir le frontend 
+app.get("/api/artisans/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const results = await queryDB("SELECT * FROM artisans WHERE id = ?", [id]);
+    if (results.length === 0) return res.status(404).json({ error: "Artisan non trouvé" });
+    res.json(results[0]);
+  } catch (err) {
+    console.error("Erreur SQL :", err);
+    res.status(500).json({ error: "Erreur serveur. Impossible de se connecter à MySQL." });
+  }
+});
+
+app.get("/api/artisans/specialite/:specialite", async (req, res) => {
+  try {
+    const { specialite } = req.params;
+    const results = await queryDB(
+      "SELECT * FROM artisans WHERE specialite = ? LIMIT 1",
+      [specialite]
+    );
+    if (results.length === 0) return res.status(404).json({ error: "Artisan non trouvé" });
+    res.json(results[0]);
+  } catch (err) {
+    console.error("Erreur SQL :", err);
+    res.status(500).json({ error: "Erreur serveur. Impossible de se connecter à MySQL." });
+  }
+});
+
+app.get("/api/categories", async (req, res) => {
+  try {
+    const results = await queryDB("SELECT DISTINCT specialite FROM artisans");
+    res.json(results.map((r) => ({ nom: r.specialite })));
+  } catch (err) {
+    console.error("Erreur SQL :", err);
+    res.status(500).json({ error: "Erreur serveur. Impossible de se connecter à MySQL." });
+  }
+});
+
+app.get("/api/artisans/search/:nom", async (req, res) => {
+  try {
+    const { nom } = req.params;
+    const results = await queryDB("SELECT * FROM artisans WHERE nom LIKE ?", [`%${nom}%`]);
+    if (results.length === 0) return res.status(404).json({ error: "Artisan non trouvé" });
+    res.json(results);
+  } catch (err) {
+    console.error("Erreur SQL :", err);
+    res.status(500).json({ error: "Erreur serveur. Impossible de se connecter à MySQL." });
+  }
+});
+
+// --- Servir le frontend ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(__dirname, "static")));
-
-//  toutes les autres routes
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, "static", "index.html"));
 });
 
-// Port pour Render 
+// --- Port ---
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
