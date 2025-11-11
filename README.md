@@ -120,4 +120,4 @@ Plus d’infos : WCAG 2.1 Guidelines
 
 **Auteur** :
 *PINERA Manuela*
-***[ PS : je n'ai pas laisser routes les pages se diriger vers la page not found mais uniquement la page "le contacter" ]***
+***[ PS : je n'ai pas laisser toutes les pages se diriger vers la page not found mais uniquement la page "le contacter" ]***
