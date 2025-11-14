@@ -120,6 +120,27 @@ npm run dev
 
 Sur Render, si la base de données n’est pas accessible, des données simulées sont affichées avec un message d’avertissement.
 
+
+### design ###
+
+### Livret
+- [Livret complet PDF](./design/livret/Projet_Artisans_Dev_Web_Front_Back.pdf)
+- [Commandes utilisées PDF](./design/livret/commande_utilisee.pdf)
+
+### Maquettes
+- ![Screenshots](./design/maquettes/screenshots.png)
+- [Lien vers la maquette PDF](./design/maquettes/lien_maquette.pdf)
+
+### Rapports Lighthouse
+- [Page 404](./design/rapports/Lighthouse_Page404.pdf)
+- [Accueil](./design/rapports/Lighthouse_Accueil.pdf)
+- [Dropdown Ouvert](./design/rapports/Lighthouse_DropdownOuvert.pdf)
+- [Fiche Artisan](./design/rapports/Lighthouse_FicheArtisan.pdf)
+- [Liste Artisan](./design/rapports/Lighthouse_ListeArtisan.pdf)
+- [Message envoyé](./design/rapports/Lighthouse_MessageEnvoye.pdf)
+
+
+
 ## Auteur ##
 
 Manuela Pinera
