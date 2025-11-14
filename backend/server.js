@@ -17,7 +17,6 @@ app.use(cors());
 app.use(express.json());
 
 // ---------------- PostgreSQL ----------------
-// SSL forcé pour Render, fonctionne aussi en localhost si tu testes Render
 const pool = new Pool({
   user: process.env.DB_USER || "artisan_db_lupu_user",
   host: process.env.DB_HOST || "dpg-d49lu22li9vc739u8v9g-a.frankfurt-postgres.render.com",
@@ -25,20 +24,20 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD || "QJT441X6W9zuGM2MKPiKf9VAsmicnXd1",
   port: parseInt(process.env.DB_PORT || 5432),
   ssl: { rejectUnauthorized: false }, // obligatoire pour Render
+  max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000
 });
 
-// ---------------- Test simple connexion ----------------
-app.get("/test-db", async (req, res) => {
+// ---------------- Ping périodique pour éviter les timeouts ----------------
+setInterval(async () => {
   try {
-    const result = await pool.query("SELECT NOW()");
-    res.json({ ok: true, time: result.rows[0] });
+    await pool.query("SELECT 1");
+    console.log("✅ Ping PostgreSQL OK");
   } catch (err) {
-    console.error("Erreur PostgreSQL :", err);
-    res.status(500).json({ error: "Erreur PostgreSQL", details: err.message });
+    console.error("❌ Ping PostgreSQL échoué :", err.message);
   }
-});
+}, 5 * 60 * 1000); // toutes les 5 minutes
 
 // ---------------- Fonctions utilitaires ----------------
 async function queryDB(sql, params = []) {
@@ -52,8 +51,16 @@ async function queryDB(sql, params = []) {
 }
 
 // ---------------- Routes API ----------------
+app.get("/test-db", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT NOW()");
+    res.json({ ok: true, time: result.rows[0] });
+  } catch (err) {
+    console.error("Erreur PostgreSQL :", err);
+    res.status(500).json({ error: "Erreur PostgreSQL", details: err.message });
+  }
+});
 
-// Tous les artisans
 app.get("/api/artisans", async (req, res) => {
   try {
     const artisans = await queryDB("SELECT * FROM artisans");
@@ -63,7 +70,6 @@ app.get("/api/artisans", async (req, res) => {
   }
 });
 
-// Artisan par ID
 app.get("/api/artisans/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -76,14 +82,10 @@ app.get("/api/artisans/:id", async (req, res) => {
   }
 });
 
-// Recherche par nom
 app.get("/api/artisans/search/:nom", async (req, res) => {
   try {
     const { nom } = req.params;
-    const results = await queryDB(
-      "SELECT * FROM artisans WHERE nom ILIKE $1",
-      [`%${nom}%`]
-    );
+    const results = await queryDB("SELECT * FROM artisans WHERE nom ILIKE $1", [`%${nom}%`]);
     if (results.length === 0)
       return res.status(404).json({ error: "Aucun artisan trouvé pour ce nom" });
     res.json(results);
@@ -92,14 +94,10 @@ app.get("/api/artisans/search/:nom", async (req, res) => {
   }
 });
 
-// Recherche par spécialité
 app.get("/api/artisans/specialite/:specialite", async (req, res) => {
   try {
     const { specialite } = req.params;
-    const results = await queryDB(
-      "SELECT * FROM artisans WHERE specialite = $1",
-      [specialite]
-    );
+    const results = await queryDB("SELECT * FROM artisans WHERE specialite = $1", [specialite]);
     if (results.length === 0)
       return res.status(404).json({ error: "Aucun artisan trouvé pour cette spécialité" });
     res.json(results);
@@ -108,7 +106,6 @@ app.get("/api/artisans/specialite/:specialite", async (req, res) => {
   }
 });
 
-// Liste des catégories
 app.get("/api/categories", async (req, res) => {
   try {
     const results = await queryDB("SELECT DISTINCT specialite FROM artisans");
@@ -123,7 +120,7 @@ const staticPath = path.join(__dirname, "static");
 if (fs.existsSync(staticPath)) {
   app.use(express.static(staticPath));
 
-  // Catch-all pour React (ESM safe)
+  // Catch-all pour React
   app.get(/.*/, (req, res) => {
     res.sendFile(path.join(staticPath, "index.html"));
   });
