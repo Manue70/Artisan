@@ -17,22 +17,25 @@ app.use(cors());
 app.use(express.json());
 
 // ---------------- PostgreSQL ----------------
+// SSL forcé pour Render, fonctionne aussi en localhost si tu testes Render
 const pool = new Pool({
   user: process.env.DB_USER || "artisan_db_lupu_user",
   host: process.env.DB_HOST || "dpg-d49lu22li9vc739u8v9g-a.frankfurt-postgres.render.com",
   database: process.env.DB_NAME || "artisan_db_lupu",
   password: process.env.DB_PASSWORD || "QJT441X6W9zuGM2MKPiKf9VAsmicnXd1",
   port: parseInt(process.env.DB_PORT || 5432),
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+  ssl: { rejectUnauthorized: false }, // obligatoire pour Render
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000
 });
 
-// Test simple de la connexion
+// ---------------- Test simple connexion ----------------
 app.get("/test-db", async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW()");
     res.json({ ok: true, time: result.rows[0] });
   } catch (err) {
-    console.error(err);
+    console.error("Erreur PostgreSQL :", err);
     res.status(500).json({ error: "Erreur PostgreSQL", details: err.message });
   }
 });
@@ -77,7 +80,10 @@ app.get("/api/artisans/:id", async (req, res) => {
 app.get("/api/artisans/search/:nom", async (req, res) => {
   try {
     const { nom } = req.params;
-    const results = await queryDB("SELECT * FROM artisans WHERE nom ILIKE $1", [`%${nom}%`]);
+    const results = await queryDB(
+      "SELECT * FROM artisans WHERE nom ILIKE $1",
+      [`%${nom}%`]
+    );
     if (results.length === 0)
       return res.status(404).json({ error: "Aucun artisan trouvé pour ce nom" });
     res.json(results);
@@ -90,7 +96,10 @@ app.get("/api/artisans/search/:nom", async (req, res) => {
 app.get("/api/artisans/specialite/:specialite", async (req, res) => {
   try {
     const { specialite } = req.params;
-    const results = await queryDB("SELECT * FROM artisans WHERE specialite = $1", [specialite]);
+    const results = await queryDB(
+      "SELECT * FROM artisans WHERE specialite = $1",
+      [specialite]
+    );
     if (results.length === 0)
       return res.status(404).json({ error: "Aucun artisan trouvé pour cette spécialité" });
     res.json(results);
@@ -114,7 +123,7 @@ const staticPath = path.join(__dirname, "static");
 if (fs.existsSync(staticPath)) {
   app.use(express.static(staticPath));
 
-  // Catch-all pour React (regex + ESM safe)
+  // Catch-all pour React (ESM safe)
   app.get(/.*/, (req, res) => {
     res.sendFile(path.join(staticPath, "index.html"));
   });
