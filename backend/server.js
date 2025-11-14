@@ -1,29 +1,46 @@
 import express from "express";
 import cors from "cors";
-import pg from "pg";
+import pkg from "pg";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 dotenv.config();
+const { Pool } = pkg;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-// configuration postgresql
-const db = new pg.Pool({
-  host: process.env.DB_HOST || "dpg-d49lu22li9vc739u8v9g-a.frankfurt-postgres.render.com",
+
+// ---------------- PostgreSQL ----------------
+const pool = new Pool({
   user: process.env.DB_USER || "artisan_db_lupu_user",
-  password: process.env.DB_PASSWORD || "QJT441X6W9zuGM2MKPiKf9VAsmicnXd1",
+  host: process.env.DB_HOST || "dpg-d49lu22li9vc739u8v9g-a.frankfurt-postgres.render.com",
   database: process.env.DB_NAME || "artisan_db_lupu",
+  password: process.env.DB_PASSWORD || "QJT441X6W9zuGM2MKPiKf9VAsmicnXd1",
   port: parseInt(process.env.DB_PORT || 5432),
-  ssl: { rejectUnauthorized: false },
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
-// Fonction utilitaire pour les requêtes SQL
+// Test simple de la connexion
+app.get("/test-db", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT NOW()");
+    res.json({ ok: true, time: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur PostgreSQL", details: err.message });
+  }
+});
+
+// ---------------- Fonctions utilitaires ----------------
 async function queryDB(sql, params = []) {
   try {
-    const result = await db.query(sql, params);
+    const result = await pool.query(sql, params);
     return result.rows;
   } catch (err) {
     console.error("Erreur SQL :", err);
@@ -31,14 +48,15 @@ async function queryDB(sql, params = []) {
   }
 }
 
-//  Tous les artisans 
+// ---------------- Routes API ----------------
+
+// Tous les artisans
 app.get("/api/artisans", async (req, res) => {
   try {
     const artisans = await queryDB("SELECT * FROM artisans");
     res.json(artisans);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erreur de connexion à PostgreSQL" });
+    res.status(500).json({ error: "Erreur PostgreSQL", details: err.message });
   }
 });
 
@@ -51,61 +69,58 @@ app.get("/api/artisans/:id", async (req, res) => {
       return res.status(404).json({ error: "Artisan non trouvé" });
     res.json(results[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erreur de connexion à PostgreSQL" });
+    res.status(500).json({ error: "Erreur PostgreSQL", details: err.message });
   }
 });
 
-//  Recherche par nom 
+// Recherche par nom
 app.get("/api/artisans/search/:nom", async (req, res) => {
   try {
     const { nom } = req.params;
-    const results = await queryDB(
-      "SELECT * FROM artisans WHERE nom ILIKE $1",
-      [`%${nom}%`]
-    );
+    const results = await queryDB("SELECT * FROM artisans WHERE nom ILIKE $1", [`%${nom}%`]);
     if (results.length === 0)
       return res.status(404).json({ error: "Aucun artisan trouvé pour ce nom" });
     res.json(results);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erreur de connexion à PostgreSQL" });
+    res.status(500).json({ error: "Erreur PostgreSQL", details: err.message });
   }
 });
 
-//  Recherche par spécialité 
+// Recherche par spécialité
 app.get("/api/artisans/specialite/:specialite", async (req, res) => {
   try {
     const { specialite } = req.params;
-    const results = await queryDB(
-      "SELECT * FROM artisans WHERE specialite = $1",
-      [specialite]
-    );
+    const results = await queryDB("SELECT * FROM artisans WHERE specialite = $1", [specialite]);
     if (results.length === 0)
-      return res
-        .status(404)
-        .json({ error: "Aucun artisan trouvé pour cette spécialité" });
+      return res.status(404).json({ error: "Aucun artisan trouvé pour cette spécialité" });
     res.json(results);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erreur de connexion à PostgreSQL" });
+    res.status(500).json({ error: "Erreur PostgreSQL", details: err.message });
   }
 });
 
-// Liste des catégories disponibles 
+// Liste des catégories
 app.get("/api/categories", async (req, res) => {
   try {
     const results = await queryDB("SELECT DISTINCT specialite FROM artisans");
-    res.json(results.map((r) => ({ nom: r.specialite })));
+    res.json(results.map(r => ({ nom: r.specialite })));
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erreur de connexion à PostgreSQL" });
+    res.status(500).json({ error: "Erreur PostgreSQL", details: err.message });
   }
 });
 
+// ---------------- Servir le frontend ----------------
+const staticPath = path.join(__dirname, "static");
+if (fs.existsSync(staticPath)) {
+  app.use(express.static(staticPath));
 
-//  LANCEMENT DU SERVEUR
+  // Catch-all pour React (regex + ESM safe)
+  app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(staticPath, "index.html"));
+  });
+}
 
+// ---------------- Lancement du serveur ----------------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
